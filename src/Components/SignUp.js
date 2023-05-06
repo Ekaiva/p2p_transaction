@@ -1,8 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ErrorMessage from "../Common/ErrorMessage";
+import ToastMsg from "../Common/ToastMsg";
 import { signUpuser } from "../services/api";
 import "../Style/SignUpPage.css";
+
 const SignUp = () => {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -19,6 +23,7 @@ const SignUp = () => {
     confirmPassword: "",
     phoneNumber: "",
   });
+  const[loader,setLoader]=useState(false)
 
   const handleChange = (value, name) => {
     setFormErrors({
@@ -34,6 +39,7 @@ const SignUp = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
     const errors = validateForm(formData);
 
     if (errors) {
@@ -44,13 +50,21 @@ const SignUp = () => {
       email: formData?.email,
       password: formData?.password,
     };
+    setLoader(true)
     signUpuser(reqBody)
       .then((res) => {
         console.log("pramod", res);
+        setLoader(false)
+        ToastMsg(
+          "Account Created Successfully",
+          "success"
+        );
+       navigate("/login")
       })
       .catch((err) => {
-        console.log(err)
-        alert(err?.response?.data.message || "something went wrong");
+        setLoader(false)
+        let error  = err?.response?.data?.detail || err?.response?.data?.email||"something went wrong";
+        ToastMsg(error, "error");
       });
   };
 
@@ -98,7 +112,7 @@ const SignUp = () => {
     <div className="signup-page">
       <h1>Sign Up</h1>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
+        {/* <div className="form-group">
           <label htmlFor="fullName">Full Name</label>
           <input
             type="text"
@@ -110,7 +124,7 @@ const SignUp = () => {
           {formErrors.fullName && (
             <ErrorMessage className="error" msg={formErrors.fullName} />
           )}
-        </div>
+        </div> */}
 
         <div className="form-group">
           <label htmlFor="email">Email</label>
@@ -125,7 +139,7 @@ const SignUp = () => {
             <ErrorMessage className="error" msg={formErrors.email} />
           )}
         </div>
-        <div className="form-group">
+        {/* <div className="form-group">
           <label htmlFor="phoneNumber">Phone Number</label>
           <input
             type="tel"
@@ -139,7 +153,7 @@ const SignUp = () => {
           {formErrors.phoneNumber && (
             <ErrorMessage className="error" msg={formErrors.phoneNumber} />
           )}
-        </div>
+        </div> */}
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
@@ -166,8 +180,8 @@ const SignUp = () => {
             <ErrorMessage className="error" msg={formErrors.confirmPassword} />
           )}
         </div>
-
-        <button type="submit">Sign Up</button>
+       {loader? <button >Processing...</button>:
+        <button type="submit">Sign Up</button>}
       </form>
     </div>
   );

@@ -1,13 +1,23 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ErrorMessage from "../Common/ErrorMessage";
+import ToastMsg from "../Common/ToastMsg";
+import { getNounce, loginUser } from "../services/api";
+import LoginWithEth from "./LoginWithEth";
 
 export default function LoginPage() {
+
+
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const [formErrors, setFormErrors] = useState({});
+  const[loader,setLoader]=useState(false)
+  const[show,setShow]=useState(false)
+
 
   const handleChange = (event) => {
     setFormData({
@@ -23,7 +33,7 @@ export default function LoginPage() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-
+  
     let errors = {};
 
     if (!formData.email) {
@@ -41,14 +51,37 @@ export default function LoginPage() {
       setFormErrors(errors);
       return;
     }
+   setLoader(true)
+     loginUser(formData).then((res)=>{
 
-    if (Object.keys(errors).length === 0) {
-      // Submit form
-    }
+      setLoader(false)
+      console.log(res)
+      localStorage.setItem("token",res.data.access)
+      navigate("/ads")
+
+     }).catch((err)=>{
+      setLoader(false)
+      let error  = err?.response?.data?.detail || err?.response?.data?.email||"something went wrong";
+      alert(error)
+      ToastMsg(error, "error");
+      
+     })
   };
+const handleEtheriumLogin =()=>{
+  getNounce().then((res)=>{
+    console.log("pramod",res)
+    setShow(true)
 
+  }).catch((err)=>{
+    console.log("err",err)
+    alert(err?.response?.data?.error||"some thing went wrong")
+
+  })
+
+}
   return (
     <div className="login-page">
+    { show&& <LoginWithEth/>}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="email">Email</label>
@@ -73,7 +106,13 @@ export default function LoginPage() {
           />
           <ErrorMessage msg={formErrors?.password} />
         </div>
-        <button type="submit">Log In</button>
+       
+        {loader? <button className="process" >Processing...</button>: <button type="submit">Log In</button>}
+        <hr></hr>
+        <p>OR</p>
+       <button onClick={()=>{
+         handleEtheriumLogin()
+       }}> Sign in With Etherium </button>
       </form>
     </div>
   );
